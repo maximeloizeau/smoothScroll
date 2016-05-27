@@ -28,9 +28,14 @@ if(document.querySelectorAll === void 0 || window.pageYOffset === void 0 || hist
 
 // Get the top position of an element in the document
 var getTop = function(element) {
-    // return value of html.getBoundingClientRect().top ... IE : 0, other browsers : -pageYOffset
-    if(element.nodeName === 'HTML') return -window.pageYOffset
-    return element.getBoundingClientRect().top + window.pageYOffset;
+    if(context === window) {
+        // return value of html.getBoundingClientRect().top ... IE : 0, other browsers : -pageYOffset
+        if(element.nodeName === 'HTML') return -window.pageYOffset;
+        return element.getBoundingClientRect().top + window.pageYOffset;
+    }
+    else {
+        element.getBoundingClientRect().top - context.getBoundingClientRect().top + context.scrollTop;
+    }
 }
 // ease in out function thanks to:
 // http://blog.greweb.fr/2012/02/bezier-curve-based-easing-functions-from-concept-to-implementation/
@@ -54,13 +59,16 @@ var position = function(start, end, elapsed, duration) {
 var smoothScroll = function(el, duration, callback, context){
     duration = duration || 500;
     context = context || window;
-    var start = window.pageYOffset;
+    var start = context === window ? window.pageYOffset : context.scrollTop;
 
     if (typeof el === 'number') {
-      var end = parseInt(el);
+      var end = el;
     } else {
-      var end = getTop(el);
+      var end = getTop(el, context);
     }
+
+    var endContext = context === window ? document.body : context;
+    end = Math.min(end, endContext.scrollHeight - endContext.offsetHeight);
 
     var clock = Date.now();
     var requestAnimationFrame = window.requestAnimationFrame ||
